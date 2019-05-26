@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import socket
+import time
 
 
 def main():
@@ -31,7 +32,20 @@ def send_data_to_dns(host='127.0.0.1'):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((host, PORT))
+        s.sendall("server;".encode())
         s.sendall("www.foo123.org;127.0.0.1".encode())
+
+        data = s.recv(1024).decode("utf-8")
+
+        begin = time.perf_counter()
+        while True:
+            if data == "ok":
+                print("cosing server connection with DNS")
+                s.sendall("server;bye".encode())
+
+            elif time.perf_counter() - begin > 10:
+                print("TIMEOUT - closing connection with DNS")
+                break
 
 
 if __name__ == "__main__":

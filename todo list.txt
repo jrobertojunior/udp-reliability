@@ -1,6 +1,6 @@
 TODO DSN project
 
-- server inicia, envia ao DNS seu endereco
+- server inicia, envia ao DNS seu endereco -DONE
 - cliente requisita ao DNS o endereco
 	- via UDP
 - conexao eh feita cliente-servidor via TCP
