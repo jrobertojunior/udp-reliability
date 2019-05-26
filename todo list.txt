@@ -1,0 +1,23 @@
+TODO DSN project
+
+- server inicia, envia ao DNS seu endereco
+- cliente requisita ao DNS o endereco
+	- via UDP
+- conexao eh feita cliente-servidor via TCP
+- depois a conexao eh feita usando UDP
+	- precisa implementar confiabilidade da conexao
+- o cliente usa o shell pra poder executar as operacoes:
+	- solicitar arquivo
+	- ver lista de arquivos no repo do servidor
+	- encerrar conexao
+
+todo list:
+1. fazer o servidor enviar seu endereco e nome pro DNS guardar esses dados
+2. cliente requisitar endereco e DNS retornar endereco
+3. estabelecer conexao TCP cliente-servidor
+4. estabelecer conecao UDP cliente-servidor
+5. implementar shell do cliente
+	6. implementar listar arquivos cliente-servidor
+	7. implementar requisicao de arquivos cliente-servidor
+	8. implementar encerrar conexao
+9. garantir confiabilidade ena conexao UDP
