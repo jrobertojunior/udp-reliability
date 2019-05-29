@@ -3,12 +3,19 @@
 import socket
 import time
 
+SERVER_DNS = "www.foo123.org"
+SERVER_IP = '127.0.0.1'
+SERVER_PORT = 65432
+
+DNS_IP = '127.0.0.1'
+DNS_PORT = 65431
+
 
 def main():
-    send_address_to_dns('127.0.0.1')
+    HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
+    PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
-    # HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
-    # PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
+    send_address_to_dns(SERVER_DNS, SERVER_IP, SERVER_PORT, DNS_IP, DNS_PORT)
 
     # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     #     s.bind((HOST, PORT))
@@ -27,13 +34,13 @@ def main():
     #             conn.sendall(msg)
 
 
-def send_address_to_dns(host='127.0.0.1'):
-    PORT = 65431
+def send_address_to_dns(server_dns, server_ip, server_port, dns_ip, dns_port):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((host, PORT))
-        # s.sendall("server;".encode())
-        s.sendall("server;www.foo123.org;127.0.0.1".encode())
+        s.connect((dns_ip, dns_port))
+
+        s.sendall("server;{};{};{}".format(
+            server_dns, server_ip, server_port).encode())
 
 
 if __name__ == "__main__":
