@@ -6,35 +6,43 @@ database = {}
 
 
 def main():
-    # show_ui()
-    ask_address_to_dns()
-
+    server_address = ask_address_to_dns()
     HOST = '127.0.0.1'  # The server's hostname or IP address
-    PORT = 65432        # The port used by the server
+    PORT = 65431        # The port used by the server
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((HOST, PORT))
+    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    #     print("Client socket created")
 
-        msg = "client message".encode()
+    #     s.connect((HOST, PORT))
+    #     print("Connected with {}:{}".format(HOST, PORT))
 
-        s.sendall(msg)
-        data = s.recv(1024)
+    #     msg = "client;www.foo123.org".encode()
+    #     s.sendall(msg)
 
-    print("client: ", repr(data))
+    #     data = s.recv(1024).decode("utf-8")
+
+    #     print(data)
 
 
 def ask_address_to_dns(host='127.0.0.1', port=65431):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        print("Client socket created")
+
         s.connect((host, port))
 
-        msg = "client;request;www.foo123.org".encode()
+        print("Connected with {}:{}".format(host, port))
+
+        request = "www.foo123.org"
+        msg = "client;{}".format(request).encode()
         s.sendall(msg)
 
-        data = s.recv(1024).decode("utf-8")
-        # if data == 'ok':
-        #     s.sendall("")
+        print("Requested", request)
 
-        print(data)
+        data = s.recv(1024).decode("utf-8")
+
+        print("  -> received", data)
+
+    return data
 
 
 def show_ui():

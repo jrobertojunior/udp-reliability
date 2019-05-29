@@ -13,19 +13,22 @@ def main():
     PORT = 65431        # DNS port that I use in this project
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        print("DNS socket created")
+
         s.bind((HOST, PORT))
         s.listen()
+
+        print("Now listening")
 
         while True:
             connection, address = s.accept()
             ip, port = address[0], address[1]
             print("Connected with {}:{}".format(ip, port))
 
-            Thread(target=client_thread, args=[
-                   connection, s, ip, port]).start()
+            Thread(target=client_thread, args=[connection, ip, port]).start()
 
 
-def client_thread(connection, socket, ip, port):
+def client_thread(connection, ip, port):
     while True:
         data = connection.recv(1024).decode("utf-8").split(';')
 
@@ -33,12 +36,12 @@ def client_thread(connection, socket, ip, port):
             key, value = (data[1], data[2])
             addresses[key] = value
 
-            print("ADD TO DIC: {{{}}}: {{{}}}".format(key, value))
+            print("  -> {{{}}}: {{{}}}".format(key, value))
             break
 
-        # elif data[0] == "client":
-        #     msg = str(addresses[data[1]]).encode()
-        #     socket.sendto(msg, (ip, port))
+        elif data[0] == "client":
+            msg = str(addresses[data[1]]).encode()
+            connection.sendto(msg, (ip, port))
 
 
 if __name__ == "__main__":
