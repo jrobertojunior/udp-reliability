@@ -5,7 +5,7 @@ import time
 
 
 def main():
-    send_data_to_dns('127.0.0.1')
+    send_address_to_dns('127.0.0.1')
 
     # HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
     # PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
@@ -27,25 +27,13 @@ def main():
     #             conn.sendall(msg)
 
 
-def send_data_to_dns(host='127.0.0.1'):
+def send_address_to_dns(host='127.0.0.1'):
     PORT = 65431
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((host, PORT))
-        s.sendall("server;".encode())
-        s.sendall("www.foo123.org;127.0.0.1".encode())
-
-        data = s.recv(1024).decode("utf-8")
-
-        begin = time.perf_counter()
-        while True:
-            if data == "ok":
-                print("cosing server connection with DNS")
-                s.sendall("server;bye".encode())
-
-            elif time.perf_counter() - begin > 10:
-                print("TIMEOUT - closing connection with DNS")
-                break
+        # s.sendall("server;".encode())
+        s.sendall("server;www.foo123.org;127.0.0.1".encode())
 
 
 if __name__ == "__main__":

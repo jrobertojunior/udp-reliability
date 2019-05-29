@@ -2,6 +2,7 @@
 
 import socket
 import time
+from threading import Thread
 
 addresses = {}
 
@@ -12,44 +13,32 @@ def main():
     PORT = 65431        # DNS port that I use in this project
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((HOST, PORT))
+        s.listen()
+
         while True:
-            s.bind((HOST, PORT))
-            s.listen()
-            conn, addr = s.accept()
+            connection, address = s.accept()
+            ip, port = address[0], address[1]
+            print("Connected with {}:{}".format(ip, port))
 
-            with conn:
-                print('Connected by', addr)
+            Thread(target=client_thread, args=[
+                   connection, s, ip, port]).start()
 
-                begin = time.perf_counter()
 
-                while True:
-                    data = conn.recv(1024).decode("utf-8")
+def client_thread(connection, socket, ip, port):
+    while True:
+        data = connection.recv(1024).decode("utf-8").split(';')
 
-                    if data:
-                        print("\t<-", data)
+        if data[0] == "server":
+            key, value = (data[1], data[2])
+            addresses[key] = value
 
-                        data = data.split(';')
+            print("ADD TO DIC: {{{}}}: {{{}}}".format(key, value))
+            break
 
-                        if data[0] == "server":
-
-                            # end connection
-                            if data[1] == "bye":
-                                break
-
-                            # add to adresses dicionary
-                            else:
-                                addresses[data[1]] = data[2]
-                                print(addresses)
-                                s.sendall("ok".encode())
-
-                        elif data[0] == "client":
-                            print("FALANDO COM CLIENTE!")
-
-                        begin = time.perf_counter()
-
-                    elif time.perf_counter() - begin > 3:
-                        print("waiting for data...")
-                        begin = time.perf_counter()
+        # elif data[0] == "client":
+        #     msg = str(addresses[data[1]]).encode()
+        #     socket.sendto(msg, (ip, port))
 
 
 if __name__ == "__main__":
