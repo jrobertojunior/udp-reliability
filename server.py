@@ -17,21 +17,21 @@ def main():
 
     send_address_to_dns(SERVER_DNS, SERVER_IP, SERVER_PORT, DNS_IP, DNS_PORT)
 
-    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    #     s.bind((HOST, PORT))
-    #     s.listen()
-    #     conn, addr = s.accept()
-    #     with conn:
-    #         print('Connected by', addr)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((HOST, PORT))
+        s.listen()
+        conn, addr = s.accept()
+        with conn:
+            print('Connected by', addr)
 
-    #         while True:
-    #             data = conn.recv(1024)
+            while True:
+                data = conn.recv(1024)
 
-    #             if not data:
-    #                 break
+                if not data:
+                    break
 
-    #             msg = "server: received {} ".format(data).encode()
-    #             conn.sendall(msg)
+                msg = "server: received {} ".format(data).encode()
+                conn.sendall(msg)
 
 
 def send_address_to_dns(server_dns, server_ip, server_port, dns_ip, dns_port):

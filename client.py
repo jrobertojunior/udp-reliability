@@ -6,25 +6,25 @@ database = {}
 
 
 def main():
-    server_address = ask_address_to_dns()
-    HOST = '127.0.0.1'  # The server's hostname or IP address
-    PORT = 65431        # The port used by the server
+    ip, port = ask_address_to_dns()
 
-    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    #     print("Client socket created")
+    if ip != -1 and port != -1:
 
-    #     s.connect((HOST, PORT))
-    #     print("Connected with {}:{}".format(HOST, PORT))
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            print("Client socket created")
 
-    #     msg = "client;www.foo123.org".encode()
-    #     s.sendall(msg)
+            s.connect((ip, port))
+            print("Connected with {}:{}".format(ip, port))
 
-    #     data = s.recv(1024).decode("utf-8")
+            msg = "client;www.foo123.org".encode()
+            s.sendall(msg)
 
-    #     print(data)
+            data = s.recv(1024).decode("utf-8")
+
+            print(data)
 
 
-def ask_address_to_dns(host='127.0.0.1', port=65431):
+def ask_address_to_dns(host='127.0.0.1', port=65431, dns="www.foo123.org"):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         print("Client socket created")
 
@@ -32,17 +32,28 @@ def ask_address_to_dns(host='127.0.0.1', port=65431):
 
         print("Connected with {}:{}".format(host, port))
 
-        request = "www.foo123.org"
-        msg = "client;{}".format(request).encode()
+        dns = "www.foo123.org"
+        msg = "client;{}".format(dns).encode()
         s.sendall(msg)
 
-        print("Requested", request)
+        print("Requested", dns)
 
         data = s.recv(1024).decode("utf-8")
 
         print("  -> received", data)
 
-    return data
+    if data == "null":
+        print("The DNS {} was not found in the database".format(dns))
+        return -1, -1
+
+    data = data.replace('(', "")
+    data = data.replace(')', "")
+    data = data.replace('\'', "")
+    data = data.replace(' ', "")
+
+    ip, port = data.split(',')
+
+    return ip, int(port)
 
 
 def show_ui():

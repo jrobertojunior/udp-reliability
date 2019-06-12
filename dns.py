@@ -28,6 +28,8 @@ def main():
             Thread(target=client_thread, args=[connection, ip, port]).start()
 
 
+# this thread handles the communication with the client
+# a client could be a server uploading its address a client requesting it
 def client_thread(connection, ip, port):
     while True:
         data = connection.recv(1024).decode("utf-8").split(';')
@@ -43,8 +45,17 @@ def client_thread(connection, ip, port):
             break
 
         elif data[0] == "client":
-            msg = str(addresses[data[1]]).encode()
+            key = data[1]
+
+            msg = None
+
+            if key in addresses:
+                msg = str(addresses[key]).encode()
+            else:
+                msg = "null".encode()
+
             connection.sendto(msg, (ip, port))
+            # msg = str(addresses[data[1]]).encode()
 
             print("  sent")
             print("  ->", msg.decode())
@@ -52,7 +63,7 @@ def client_thread(connection, ip, port):
             connection.close()
             break
 
-    print("Connected with {}:{} closed".format(ip, port))
+    print("Connection with {}:{} closed".format(ip, port))
 
 
 if __name__ == "__main__":
