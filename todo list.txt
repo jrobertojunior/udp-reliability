@@ -4,9 +4,9 @@ todo list:
 1. fazer o servidor enviar seu endereco e nome pro DNS guardar esses dados -DONE
 2. cliente requisitar endereco e DNS retornar endereco -DONE
 3. estabelecer conexao TCP cliente-servidor -DONE
-4. estabelecer conecao UDP cliente-servidor
+4. estabelecer conexao UDP cliente-servidor
 5. implementar shell do cliente
-	6. implementar listar arquivos cliente-servidor
+	6. implementar listar arquivos cliente-servidor -DONE
 	7. implementar requisicao de arquivos cliente-servidor
 	8. implementar encerrar conexao
 9. garantir confiabilidade ena conexao UDP

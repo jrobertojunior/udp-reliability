@@ -2,23 +2,45 @@
 
 import socket
 import time
+import os
 
 SERVER_DNS = "www.foo123.org"
-SERVER_IP = '127.0.0.1'
+SERVER_IP = 'localhost'
 SERVER_PORT = 65432
 
-DNS_IP = '127.0.0.1'
+DNS_IP = 'localhost'
 DNS_PORT = 65431
 
 
 def main():
-    HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
-    PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
+    HOST = 'localhost'  # Standard loopback interface address (localhost)
+    PORT = 65432        # Port tso listen on (non-privileged ports are > 1023)
 
+    print("log: server will send address to DNS server".upper())
     send_address_to_dns(SERVER_DNS, SERVER_IP, SERVER_PORT, DNS_IP, DNS_PORT)
 
+    print("log: server will start communication with client".upper())
+    tcp_connetion_with_client(SERVER_IP, SERVER_PORT)
+
+    print("END OF PROGRAM")
+
+
+def send_address_to_dns(server_dns, server_ip, server_port, dns_ip, dns_port):
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT))
+        s.connect((dns_ip, dns_port))
+        print("Connected with {}:{}".format(dns_ip, dns_port))
+
+        msg = "server;{};{};{}".format(server_dns, server_ip, server_port)
+        s.sendall(msg.encode())
+
+        print("  sent")
+        print("  ->", msg)
+
+
+def tcp_connetion_with_client(server_ip, server_port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((server_ip, server_port))
         s.listen()
         conn, addr = s.accept()
         with conn:
@@ -31,16 +53,23 @@ def main():
                     break
 
                 msg = "server: received {} ".format(data).encode()
-                conn.sendall(msg)
+                client_msg = data.decode("utf-8")
+
+                send_msg = None
+                if client_msg == "1":
+                    conn.sendall(get_list_files().encode())
 
 
-def send_address_to_dns(server_dns, server_ip, server_port, dns_ip, dns_port):
+def get_list_files():
+    files = os.listdir("./server_data")
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((dns_ip, dns_port))
+    msg = ""
+    i = 1
+    for f in files:
+        msg += "{}. {}\n".format(i, f)
+        i += 1
 
-        s.sendall("server;{};{};{}".format(
-            server_dns, server_ip, server_port).encode())
+    return msg
 
 
 if __name__ == "__main__":
