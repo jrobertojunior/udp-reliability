@@ -4,7 +4,7 @@ import socket
 import time
 from threading import Thread
 
-addresses = {}
+dns_list = {}
 
 
 def main():
@@ -12,20 +12,47 @@ def main():
     HOST = 'localhost'  # Standard loopback interface address (localhost)
     PORT = 65431        # DNS port that I use in this project
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    i = 1
+
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         print("DNS socket created")
 
         s.bind((HOST, PORT))
-        s.listen()
+        # s.listen()
 
         print("Now listening")
 
-        while True:
-            connection, address = s.accept()
-            ip, port = address[0], address[1]
-            print("\n\n----------\nConnected with {}:{}".format(ip, port))
+        # while True:
+        #     connection, address = s.accept()
+        #     ip, port = address[0], address[1]
+        #     print("\n\n-----{}-----\nConnected with {}:{}".format(i, ip, port))
 
-            Thread(target=client_thread, args=[connection, ip, port]).start()
+        #     Thread(target=client_thread, args=[connection, ip, port]).start()
+        #     i += 1
+
+        while True:
+            data, addr = s.recvfrom(1024) # wait for data to receive
+            msg = data.decode("utf-8").split(';')
+
+            print("  <- {} from {}".format(msg, addr))
+
+            if msg[0] == "server":
+                key, value = (msg[1], (msg[2], msg[3]))
+                dns_list[key] = value # update dns dictionary
+
+            elif msg[0] == "client":
+                key = msg[1]
+
+                reply = None
+
+                if key in dns_list:
+                    reply = str(dns_list[key]).encode()
+                else:
+                    reply = "null".encode()
+
+                s.sendto(reply, addr)
+
+                print("  -> {} to {}".format(reply.decode("utf-8"), addr))
 
 
 # this thread handles the communication with the client
@@ -37,7 +64,7 @@ def client_thread(conn, ip, port):
         if data[0] == "server":
             print("  it's a client")
             key, value = (data[1], (data[2], data[3]))
-            addresses[key] = value
+            dns_list[key] = value
 
             print("  received")
             print("  <- {{{}}}: {{{}}}".format(key, value))
@@ -51,13 +78,13 @@ def client_thread(conn, ip, port):
 
             msg = None
 
-            if key in addresses:
-                msg = str(addresses[key]).encode()
+            if key in dns_list:
+                msg = str(dns_list[key]).encode()
             else:
                 msg = "null".encode()
 
             conn.sendto(msg, (ip, port))
-            # msg = str(addresses[data[1]]).encode()
+            # msg = str(dns_list[data[1]]).encode()
 
             print("  sent")
             print("  ->", msg.decode())
@@ -68,6 +95,8 @@ def client_thread(conn, ip, port):
     print("Connection with {}:{} closed".format(ip, port))
     print("----------")
 
+def log(msg):
+    print("--", msg)
 
 if __name__ == "__main__":
     main()

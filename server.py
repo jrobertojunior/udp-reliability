@@ -10,12 +10,9 @@ SERVER_PORT = 65432
 
 DNS_IP = 'localhost'
 DNS_PORT = 65431
-
+DNS_ADDR = ('localhost', 65431)
 
 def main():
-    HOST = 'localhost'  # Standard loopback interface address (localhost)
-    PORT = 65432        # Port tso listen on (non-privileged ports are > 1023)
-
     print("log: server will send address to DNS server".upper())
     send_address_to_dns(SERVER_DNS, SERVER_IP, SERVER_PORT, DNS_IP, DNS_PORT)
 
@@ -26,16 +23,21 @@ def main():
 
 
 def send_address_to_dns(server_dns, server_ip, server_port, dns_ip, dns_port):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        msg = "server;{};{};{}".format(server_dns, server_ip, server_port).encode()
+        s.sendto(msg, DNS_ADDR)
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((dns_ip, dns_port))
-        print("Connected with {}:{}".format(dns_ip, dns_port))
+        print("  -> {} to {}".format(msg, DNS_ADDR))
 
-        msg = "server;{};{};{}".format(server_dns, server_ip, server_port)
-        s.sendall(msg.encode())
+    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    #     s.connect((dns_ip, dns_port))
+    #     print("Connected with {}:{}".format(dns_ip, dns_port))
 
-        print("  sent")
-        print("  ->", msg)
+    #     msg = "server;{};{};{}".format(server_dns, server_ip, server_port)
+    #     s.sendall(msg.encode())
+
+    #     print("  sent")
+    #     print("  ->", msg)
 
 
 def tcp_connetion_with_client(server_ip, server_port):
