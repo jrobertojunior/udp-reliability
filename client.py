@@ -1,37 +1,40 @@
 #!/usr/bin/env python3
 
 import socket
+from support import *
+import select
 
+timeout = 3
 database = {}
 
 DNS_ADDR = ('localhost', 65431)
-
 THIS_ADDR = ("localhost", 65430)
 
+BUF = 1024
+
+
 def main():
-    log("client with ask address to dns")
-    addr = ask_address_to_dns()
+    # domain = input("Type the domain to get address\n-> ")
+    addr = ask_address_to_dns("www.foo123.org")
 
     log("client will start conversation with server")
     udp_with_server(addr)
 
 
-def ask_address_to_dns(domain="www.foo123.org"):
+def ask_address_to_dns(domain):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind(THIS_ADDR)
 
         msg = "client;{}".format(domain).encode()
 
-        s.sendto(msg, DNS_ADDR) # send dns request message
+        s.sendto(msg, DNS_ADDR)  # send dns request message
         print_sent(msg, DNS_ADDR)
-        # print("  -> {} to {}".format(msg.decode("utf-8"), dns_server_addr))
 
-        data, addr = s.recvfrom(1024)
+        data, addr = s.recvfrom(BUF)
         print_received(data, addr)
-        # print("  <- {} from {}".format(msg_received, addr))
 
         return handle_dns_message(data)
-    
+
 
 def handle_dns_message(data):
     data = data.decode("utf-8")
@@ -63,7 +66,7 @@ def tcp_connection_with_server(server_addr):
             msg = op.encode()
             s.sendall(msg)
 
-            data = s.recv(1024).decode("utf-8")
+            data = s.recv(BUF).decode("utf-8")
 
             print(data)
 
@@ -77,19 +80,30 @@ def udp_with_server(server_addr):
             s.sendto(op.encode(), server_addr)
             print_sent(op, server_addr)
 
-            data, addr = s.recvfrom(1024)
-            print_received(data, addr)
+            if op == "0":
+                break
+            elif op == "1":
+                data, addr = s.recvfrom(BUF)
+                print_received(data, addr)
+            elif op == "2":
+                filename = input("type filename\n-> ")
+                s.sendto(filename.encode(), server_addr)
+                receive_file(filename, s)
+
+    log("end of communication with server")
 
 
 def get_client_input():
 
     while True:
+        print("\n----- MENU -----")
+        print("0. End connection")
         print("1. List files")
-        print("0. end connection")
+        print("2. Request file")
 
         try:
             possible_ans = [0, 1, 2]
-            ans = int(input("  -> "))
+            ans = int(input("-> "))
 
             if ans not in possible_ans:
                 raise ValueError("some exception here!!")
@@ -100,20 +114,18 @@ def get_client_input():
         return str(ans)
 
 
-def log(msg):
-    print("--", msg)
-
-def print_received(msg, addr):
-    if isinstance(msg, str):
-        print("  <- {} from {}".format(msg, addr))
-    else:
-        print("  <- {} from {}".format(msg.decode("utf-8"), addr))
-
-def print_sent(msg, addr):
-    if isinstance(msg, str):
-        print("  -> {} to {}".format(msg, addr))
-    else:
-        print("  -> {} to {}".format(msg.decode("utf-8"), addr))
+def receive_file(filename, sock):
+    with open("client_data/" + filename, 'wb') as f:
+        while True:
+            ready = select.select([sock], [], [], timeout)
+            if ready[0]:
+                data, addr = sock.recvfrom(BUF)
+                print(data, addr)
+                f.write(data)
+            else:
+                log("TIMEOUT")
+                f.close()
+                break
 
 
 if __name__ == "__main__":
