@@ -4,6 +4,7 @@ import socket
 from support import *
 import select
 import time
+import random
 
 timeout = 3
 database = {}
@@ -12,6 +13,8 @@ DNS_ADDR = ('localhost', 65431)
 THIS_ADDR = ("localhost", 65430)
 
 BUF = 1024
+
+fake_error = True
 
 
 def main():
@@ -120,16 +123,21 @@ def receive_file(filename, sock):
         begin = time.process_time()
 
         while True:
-            ready = select.select([sock], [], [], timeout)
-            if ready[0]:
+            if fake_error and random.randint(0, 9) % 9 != 0:
                 data, addr = sock.recvfrom(BUF)
-                print(data[-1], addr)
-                f.write(data[:-1])
-                sock.sendto(str(data[-1]).encode(), addr)
+                sock.sendto(str(data[-1] + 1).encode(), addr)
+
             else:
-                log("TIMEOUT")
-                f.close()
-                break
+                ready = select.select([sock], [], [], timeout)
+                if ready[0]:
+                    data, addr = sock.recvfrom(BUF)
+                    print(data[-1], addr)
+                    f.write(data[:-1])
+                    sock.sendto(str(data[-1]).encode(), addr)
+                else:
+                    log("TIMEOUT")
+                    f.close()
+                    break
 
     log("file transfer took {} seconds".format(
         time.process_time() - begin - timeout))

@@ -5,12 +5,15 @@ import time
 import os
 from support import *
 from random import randint
+import select
 
 DOMAIN = "www.foo123.org"
 THIS_ADDR = ("localhost", 65432)
 DNS_ADDR = ('localhost', 65431)
 
 BUF = 1024
+
+timeout = 1
 
 
 def main():
@@ -69,21 +72,6 @@ def get_list_files():
 
 def send_file(filename, addr, sock):
     with open("server_data/" + filename, "rb") as f:
-        # data = f.read(BUF - 1)
-        # data = bytearray(data)
-        # data.append(1)
-        # data[-1] = 123
-        # while data:
-        #     if sock.sendto(data, addr):
-        #         data, addr = sock.recvfrom(BUF)
-        #         print(data)
-        #         # print(data, addr)
-        #         data = f.read(BUF - 1)
-        #         data = bytearray(data)
-        #         data.append(1)
-        #         data[-1] = 123
-        #         time.sleep(0.02)
-
         while True:
             data = f.read(BUF - 1)
 
@@ -92,18 +80,23 @@ def send_file(filename, addr, sock):
 
             data = bytearray(data)  # bytes are immutable, convert o bytearray
             data.append(1)  # append another byte
-            seg = randint(0, 256)  # generate random seg number
+            seg = randint(0, 255)  # generate random seg number
             data[-1] = seg  # write hash number
 
             sock.sendto(data, addr)
 
-            data, addr = sock.recvfrom(BUF)
+            while True:
+                ready = select.select([sock], [], [], timeout)
+                if ready[0]:
+                    data, addr = sock.recvfrom(BUF)
+                    break
+                else:
+                    log("sending seg {} again".format(seg))
 
             if int(data.decode("utf-8")) == seg:
                 print("ok", data)
             else:
                 print("opaaa")
-            # print(data)
 
         log("sent {} to {}".format(filename, addr))
 
