@@ -10,3 +10,10 @@ todo list:
 	7. implementar requisicao de arquivos cliente-servidor -DONE
 	8. implementar encerrar conexao -DONE
 9. garantir confiabilidade ena conexao UDP -DONE
+
+
+PROJETO AINDA NAO FOI TERMINADO!
+- precisa fazer função que abstraia essa confiabilidade. A confiabilidade não está implementada para todas as mensagens servidor->cliente, muito menos do cliente->servidor
+- a confiabilidade só está implementada no servidor para mandar mensagens para mandar algum arquivo
+- precisa de uma funcao para mandar dados chamada send_udp_confiability(data) que recebe um bytearray e espera por um acknowledgement wait_for_ack()
+- outra função para receber receive_udp_confiability() que retorne os dados recebidos. Dentro do receive, deve haver um ack_udp_confiability(), que manda o o ultimo byte do pacote.
