@@ -3,6 +3,7 @@
 import socket
 from support import *
 import select
+import time
 
 timeout = 3
 database = {}
@@ -116,16 +117,22 @@ def get_client_input():
 
 def receive_file(filename, sock):
     with open("client_data/" + filename, 'wb') as f:
+        begin = time.process_time()
+
         while True:
             ready = select.select([sock], [], [], timeout)
             if ready[0]:
                 data, addr = sock.recvfrom(BUF)
-                print(data, addr)
-                f.write(data)
+                print(data[-1], addr)
+                f.write(data[:-1])
+                sock.sendto(str(data[-1]).encode(), addr)
             else:
                 log("TIMEOUT")
                 f.close()
                 break
+
+    log("file transfer took {} seconds".format(
+        time.process_time() - begin - timeout))
 
 
 if __name__ == "__main__":
