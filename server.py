@@ -83,20 +83,25 @@ def send_file(filename, addr, sock):
             seg = randint(0, 255)  # generate random seg number
             data[-1] = seg  # write hash number
 
-            sock.sendto(data, addr)
-
             while True:
+                sock.sendto(data, addr)
+
+                received = False
+                correct_random = False
+
                 ready = select.select([sock], [], [], timeout)
                 if ready[0]:
                     data, addr = sock.recvfrom(BUF)
-                    break
+                    received = True
                 else:
-                    log("sending seg {} again".format(seg))
+                    log("timeout, sending {} again".format(seg))
 
-            if int(data.decode("utf-8")) == seg:
-                print("ok", data)
-            else:
-                print("opaaa")
+                if int(data.decode("utf-8")) == seg:
+                    print("ok", data)
+                    correct_random = True
+
+                if received and correct_random:
+                    break
 
         log("sent {} to {}".format(filename, addr))
 
