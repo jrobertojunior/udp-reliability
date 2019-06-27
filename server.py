@@ -6,6 +6,8 @@ import os
 from support import *
 from random import randint
 import select
+from udp_confiability import *
+import threading
 
 DOMAIN = "www.foo123.org"
 THIS_ADDR = ("localhost", 65432)
@@ -17,11 +19,31 @@ timeout = 1
 
 
 def main():
-    log("will send this domain address to DNS server")
     send_address_to_dns(DOMAIN, DNS_ADDR)
+    log("sent addres to DNS with success")
 
-    log("server will start communication with client")
-    udp_with_client()
+    tcp_with_client()
+    log("established TCP conn with client with success")
+
+    # time.sleep(2)
+
+    new_udp_with_client()
+    log("end of program")
+
+
+def new_udp_with_client():
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.bind(THIS_ADDR)
+
+        data, addr = s.recvfrom(BUF)
+        print_received(data, addr)
+
+        result = send_message("funciona!!", addr, s)
+
+        # if result == 1:
+        #     log("funcounout hehea")
+        # else:
+        #     log("merda.")
 
 
 def send_address_to_dns(server_dns, dns_addr):
@@ -31,6 +53,20 @@ def send_address_to_dns(server_dns, dns_addr):
         s.sendto(msg, DNS_ADDR)
 
         print("  -> {} to {}".format(msg.decode("utf-8"), DNS_ADDR))
+
+
+def tcp_with_client():
+    addr = None
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(THIS_ADDR)
+        s.listen()
+        conn, addr = s.accept()
+
+        with conn:
+            log("connected with {}".format(addr))
+
+    return addr
 
 
 def udp_with_client():

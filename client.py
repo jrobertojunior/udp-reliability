@@ -5,12 +5,13 @@ from support import *
 import select
 import time
 import random
+from udp_confiability import *
 
 timeout = 3
 database = {}
 
 DNS_ADDR = ('localhost', 65431)
-THIS_ADDR = ("localhost", 65430)
+THIS_ADDR = ("localhost", 65433)
 
 BUF = 1024
 
@@ -20,9 +21,30 @@ fake_error = True
 def main():
     # domain = input("Type the domain to get address\n-> ")
     addr = ask_address_to_dns("www.foo123.org")
+    log("received addres from dns with success")
 
-    log("client will start conversation with server")
-    udp_with_server(addr)
+    tcp_with_server(addr)
+    log("established TCP conn with server with success")
+
+    time.sleep(0.5)
+
+    new_udp_with_server(addr)
+
+
+def new_udp_with_server(addr):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.bind(THIS_ADDR)
+
+        msg = "hi".encode()
+        s.sendto(msg, addr)
+        print_sent(msg, addr)
+
+        msg = receive_message(s)
+
+        # if msg == None:
+        #     log("failed")
+        # else:
+        #     print(msg)
 
 
 def ask_address_to_dns(domain):
@@ -52,27 +74,10 @@ def handle_dns_message(data):
     return (ip, int(port))
 
 
-def tcp_connection_with_server(server_addr):
+def tcp_with_server(addr):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        # print("Client socket created")
-        log("Client socket created")
-
-        s.connect(server_addr)
-        log("Connected with {}:{}".format(server_addr))
-
-        while True:
-            op = get_user_input()
-
-            if op == 0:
-                s.close()
-                return
-
-            msg = op.encode()
-            s.sendall(msg)
-
-            data = s.recv(BUF).decode("utf-8")
-
-            print(data)
+        s.connect(addr)
+        log("Connected with {}".format(addr))
 
 
 def udp_with_server(server_addr):

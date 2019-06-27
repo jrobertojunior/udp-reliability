@@ -196,7 +196,7 @@ A confiabilidade do UDP foi implementada na operação em que o servidor envia u
 
 Antes de entrar em código, é interessante explicar a lógica utilizada para garantir essa confiabilidade.
 
-Basicamente, quem envia um _packet_ usa o último byte da sequência para guardar um número chamado `rand_n`, que é um número aleatório que vai de acordo com a capacidade dos bytes reservados. Como apenas um byte foi reservado, este número vai de 0 a 255.
+Basicamente, quem envia um _packet_ usa o último byte da sequência para guardar um número chamado `rand_n` - um número aleatório que vai de acordo com a capacidade dos bytes reservados. Como apenas um byte foi reservado, este número vai de 0 a 255.
 
 Quando o servidor envia um datagrama para o cliente, ele espera uma confimação vinda do cliente de que o pacote foi recebido por completo, análogo ao _ack_ do protocolo TCP. O conteúdo dessa resposta é exatamente o `rand_n` que foi atribuído pelo servidor.
 

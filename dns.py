@@ -16,12 +16,8 @@ def main():
     i = 1
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        print("DNS socket created")
-
         s.bind(THIS_ADDR)
-        # s.listen()
-
-        print("Now listening")
+        log("DNS socket setted up at {}".format(THIS_ADDR))
 
         while True:
             data, addr = s.recvfrom(BUF)  # wait for data to receive
