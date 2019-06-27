@@ -6,6 +6,8 @@ import select
 import time
 import random
 from udp_confiability import *
+import sys
+
 
 timeout = 3
 database = {}
@@ -29,22 +31,31 @@ def main():
     time.sleep(0.5)
 
     new_udp_with_server(addr)
+    log("end of program")
 
 
 def new_udp_with_server(addr):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind(THIS_ADDR)
 
-        msg = "hi".encode()
-        s.sendto(msg, addr)
-        print_sent(msg, addr)
+        while True:
+            op = get_user_input()
 
-        msg = receive_message(s)
+            send_message(op, addr, s, print_status=True)
 
-        # if msg == None:
-        #     log("failed")
-        # else:
-        #     print(msg)
+            if op == "0":
+                break
+            elif op == "1":
+                data, addr = receive_message(s, print_status=True)
+                print_received(data, addr)
+            # elif op == "2":
+                # filename = input("type filename\n-> ")
+                # s.sendto(filename.encode(), server_addr)
+                # receive_file(filename, s)
+
+                # send_message(msg, addr, s, print_status=False)
+
+                # msg, addr = receive_message(s, print_status=False)
 
 
 def ask_address_to_dns(domain):
@@ -113,6 +124,7 @@ def get_user_input():
         try:
             possible_ans = [0, 1, 2]
             ans = int(input("-> "))
+            sys.stdout.flush()
 
             if ans not in possible_ans:
                 raise ValueError("some exception here!!")

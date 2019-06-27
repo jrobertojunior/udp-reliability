@@ -35,15 +35,24 @@ def new_udp_with_client():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind(THIS_ADDR)
 
-        data, addr = s.recvfrom(BUF)
-        print_received(data, addr)
+        while True:
+            op, addr = receive_message(s, print_status=True)
 
-        result = send_message("funciona!!", addr, s)
+            if op == "1":
+                msg = str(os.listdir("./server_data"))
+                # s.sendto(msg.encode(), addr)
+                send_message(msg, addr, s, print_status=True)
+                print_sent(msg, addr)
 
-        # if result == 1:
-        #     log("funcounout hehea")
-        # else:
-        #     log("merda.")
+            # elif op == "2":
+                # data, addr = s.recvfrom(BUF)
+                # log("server was requested to send " + data.decode("utf-8"))
+                # send_file(data.decode("utf-8"), addr, s)
+
+            elif op == "0":
+                break
+
+            # result = send_message(msg, addr, s, print_status=False)
 
 
 def send_address_to_dns(server_dns, dns_addr):
