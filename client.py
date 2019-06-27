@@ -61,7 +61,7 @@ def tcp_connection_with_server(server_addr):
         log("Connected with {}:{}".format(server_addr))
 
         while True:
-            op = get_client_input()
+            op = get_user_input()
 
             if op == 0:
                 s.close()
@@ -79,7 +79,7 @@ def udp_with_server(server_addr):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind(THIS_ADDR)
         while True:
-            op = get_client_input()
+            op = get_user_input()
 
             s.sendto(op.encode(), server_addr)
             print_sent(op, server_addr)
@@ -97,11 +97,11 @@ def udp_with_server(server_addr):
     log("end of communication with server")
 
 
-def get_client_input():
+def get_user_input():
 
     while True:
         print("\n----- MENU -----")
-        print("0. End connection")
+        print("0. End communication")
         print("1. List files")
         print("2. Request file")
 

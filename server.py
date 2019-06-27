@@ -80,8 +80,8 @@ def send_file(filename, addr, sock):
 
             data = bytearray(data)  # bytes are immutable, convert o bytearray
             data.append(1)  # append another byte
-            seg = randint(0, 255)  # generate random seg number
-            data[-1] = seg  # write hash number
+            rand_n = randint(0, 255)  # generate random rand_n number
+            data[-1] = rand_n  # write hash number
 
             while True:
                 sock.sendto(data, addr)
@@ -94,9 +94,9 @@ def send_file(filename, addr, sock):
                     data, addr = sock.recvfrom(BUF)
                     received = True
                 else:
-                    log("timeout, sending {} again".format(seg))
+                    log("timeout, sending {} again".format(rand_n))
 
-                if int(data.decode("utf-8")) == seg:
+                if int(data.decode("utf-8")) == rand_n:
                     print("ok", data)
                     correct_random = True
 
