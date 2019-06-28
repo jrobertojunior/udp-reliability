@@ -53,17 +53,16 @@ def receive_message(sock, print_status=False):
         server_ack = server_ack.decode("utf-8")
 
         if server_ack == "1":
-            return data[:-1].decode("utf-8"), addr
+            try:
+                return data[:-1].decode("utf-8"), addr
+            except UnicodeDecodeError:
+                return data[:-1], addr
 
         if print_status:
             print("incorrect ack...")
 
 
 def append_rand_n(data):
-    rand_n = randint(0, 255)  # generating random number
+    rand_n = randint(0, 10)  # generating random number
 
-    data = bytearray(data)
-    data.append(1)
-    data[-1] = rand_n  # appending random number to data
-
-    return data, rand_n
+    return data + bytes([rand_n]), rand_n

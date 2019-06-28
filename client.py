@@ -41,17 +41,18 @@ def new_udp_with_server(addr):
         while True:
             op = get_user_input()
 
-            send_message(op, addr, s, print_status=True)
+            send_message(op, addr, s, print_status=False)
 
             if op == "0":
                 break
             elif op == "1":
-                data, addr = receive_message(s, print_status=True)
+                data, addr = receive_message(s, print_status=False)
                 print_received(data, addr)
-            # elif op == "2":
-                # filename = input("type filename\n-> ")
-                # s.sendto(filename.encode(), server_addr)
-                # receive_file(filename, s)
+            elif op == "2":
+                filename = input("type filename\n-> ")
+                send_message(filename, addr, s, print_status=False)
+
+                receive_file(filename, s)
 
                 # send_message(msg, addr, s, print_status=False)
 
@@ -140,21 +141,16 @@ def receive_file(filename, sock):
         begin = time.process_time()
 
         while True:
-            if fake_error and random.randint(0, 9) % 9 != 0:
-                data, addr = sock.recvfrom(BUF)
-                sock.sendto(str(data[-1] + 1).encode(), addr)
-
+            ready = select.select([sock], [], [], timeout)
+            if ready[0]:
+                # data, addr = sock.recvfrom(BUF)
+                data, addr = receive_message(sock)
+                # print(data[-1], addr)
+                f.write(data)
             else:
-                ready = select.select([sock], [], [], timeout)
-                if ready[0]:
-                    data, addr = sock.recvfrom(BUF)
-                    print(data[-1], addr)
-                    f.write(data[:-1])
-                    sock.sendto(str(data[-1]).encode(), addr)
-                else:
-                    log("TIMEOUT")
-                    f.close()
-                    break
+                log("TIMEOUT")
+                f.close()
+                break
 
     log("file transfer took {} seconds".format(
         time.process_time() - begin - timeout))

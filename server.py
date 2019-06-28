@@ -13,7 +13,7 @@ DOMAIN = "www.foo123.org"
 THIS_ADDR = ("localhost", 65432)
 DNS_ADDR = ('localhost', 65431)
 
-BUF = 1024
+BUF = 1023
 
 timeout = 1
 
@@ -36,18 +36,17 @@ def new_udp_with_client():
         s.bind(THIS_ADDR)
 
         while True:
-            op, addr = receive_message(s, print_status=True)
+            op, addr = receive_message(s, print_status=False)
 
             if op == "1":
                 msg = str(os.listdir("./server_data"))
                 # s.sendto(msg.encode(), addr)
-                send_message(msg, addr, s, print_status=True)
+                send_message(msg, addr, s, print_status=False)
                 print_sent(msg, addr)
 
-            # elif op == "2":
-                # data, addr = s.recvfrom(BUF)
-                # log("server was requested to send " + data.decode("utf-8"))
-                # send_file(data.decode("utf-8"), addr, s)
+            elif op == "2":
+                filename, addr = receive_message(s, print_status=True)
+                send_file(filename, addr, s)
 
             elif op == "0":
                 break
@@ -78,31 +77,6 @@ def tcp_with_client():
     return addr
 
 
-def udp_with_client():
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.bind(THIS_ADDR)
-
-        while True:
-            data, addr = s.recvfrom(BUF)
-            msg_received = data.decode("utf-8")
-            print_received(msg_received, addr)
-
-            if msg_received == "1":
-                msg = str(os.listdir("./server_data"))
-                s.sendto(msg.encode(), addr)
-                print_sent(msg, addr)
-
-            elif msg_received == "2":
-                data, addr = s.recvfrom(BUF)
-                log("server was requested to send " + data.decode("utf-8"))
-                send_file(data.decode("utf-8"), addr, s)
-
-            elif msg_received == "0":
-                break
-
-    log("end of communication with client")
-
-
 def get_list_files():
     files = os.listdir("./server_data")
 
@@ -118,37 +92,12 @@ def get_list_files():
 def send_file(filename, addr, sock):
     with open("server_data/" + filename, "rb") as f:
         while True:
-            data = f.read(BUF - 1)
+            data = f.read(1023)
 
             if not data:
                 break
 
-            data = bytearray(data)  # bytes are immutable, convert o bytearray
-            data.append(1)  # append another byte
-            rand_n = randint(0, 255)  # generate random rand_n number
-            data[-1] = rand_n  # write hash number
-
-            while True:
-                sock.sendto(data, addr)
-
-                received = False
-                correct_random = False
-
-                ready = select.select([sock], [], [], timeout)
-                if ready[0]:
-                    data, addr = sock.recvfrom(BUF)
-                    received = True
-                else:
-                    log("timeout, sending {} again".format(rand_n))
-
-                if int(data.decode("utf-8")) == rand_n:
-                    print("ok", data)
-                    correct_random = True
-
-                if received and correct_random:
-                    break
-
-        log("sent {} to {}".format(filename, addr))
+            send_message(data, addr, sock)
 
 
 def log(msg):
