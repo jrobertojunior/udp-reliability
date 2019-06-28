@@ -51,8 +51,12 @@ def new_udp_with_server(addr):
             elif op == "2":
                 filename = input("type filename\n-> ")
                 send_message(filename, addr, s, print_status=False)
+                data, addr = receive_message(s)
 
-                receive_file(filename, s)
+                if data == "-1":
+                    print("file not found!")
+                else:
+                    receive_file(filename, s)
 
                 # send_message(msg, addr, s, print_status=False)
 
@@ -92,28 +96,6 @@ def tcp_with_server(addr):
         log("Connected with {}".format(addr))
 
 
-def udp_with_server(server_addr):
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.bind(THIS_ADDR)
-        while True:
-            op = get_user_input()
-
-            s.sendto(op.encode(), server_addr)
-            print_sent(op, server_addr)
-
-            if op == "0":
-                break
-            elif op == "1":
-                data, addr = s.recvfrom(BUF)
-                print_received(data, addr)
-            elif op == "2":
-                filename = input("type filename\n-> ")
-                s.sendto(filename.encode(), server_addr)
-                receive_file(filename, s)
-
-    log("end of communication with server")
-
-
 def get_user_input():
 
     while True:
@@ -138,22 +120,18 @@ def get_user_input():
 
 def receive_file(filename, sock):
     with open("client_data/" + filename, 'wb') as f:
-        begin = time.process_time()
 
         while True:
             ready = select.select([sock], [], [], timeout)
             if ready[0]:
-                # data, addr = sock.recvfrom(BUF)
                 data, addr = receive_message(sock)
-                # print(data[-1], addr)
-                f.write(data)
+                try:
+                    f.write(data.encode())
+                except AttributeError:
+                    f.write(data)
             else:
-                log("TIMEOUT")
                 f.close()
                 break
-
-    log("file transfer took {} seconds".format(
-        time.process_time() - begin - timeout))
 
 
 if __name__ == "__main__":

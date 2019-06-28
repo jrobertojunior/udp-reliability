@@ -6,6 +6,31 @@ Este projeto teve como objetivo implmentar uma comunicação cliente-servidor vi
 Autor: José Roberto Fonseca e Silva Júnior, jrfsj@cin.ufpe.br
 ```
 
+## Sumário
+
+- [Projeto DNS Infraestrutura de Comnumicação](#Projeto-DNS-Infraestrutura-de-Comnumica%C3%A7%C3%A3o)
+  - [Sumário](#Sum%C3%A1rio)
+  - [Módulo DNS](#M%C3%B3dulo-DNS)
+    - [Mapeamento de endereços](#Mapeamento-de-endere%C3%A7os)
+    - [Inicialização](#Inicializa%C3%A7%C3%A3o)
+    - [Loop](#Loop)
+      - [Formato geral de uma mensagem](#Formato-geral-de-uma-mensagem)
+      - [Mensagem do servidor](#Mensagem-do-servidor)
+      - [Mensagem do cliente](#Mensagem-do-cliente)
+  - [Módulo servidor](#M%C3%B3dulo-servidor)
+    - [Comunicação com servidor DNS](#Comunica%C3%A7%C3%A3o-com-servidor-DNS)
+    - [Comunicação com cliente](#Comunica%C3%A7%C3%A3o-com-cliente)
+  - [Módulo cliente](#M%C3%B3dulo-cliente)
+    - [Inicialização e comunicação com DNS-server](#Inicializa%C3%A7%C3%A3o-e-comunica%C3%A7%C3%A3o-com-DNS-server)
+    - [Comunicação com servidor](#Comunica%C3%A7%C3%A3o-com-servidor)
+  - [Confiabilidade com UDP](#Confiabilidade-com-UDP)
+    - [send_message](#sendmessage)
+    - [receive_message](#receivemessage)
+  - [Operações cliente-servidor](#Opera%C3%A7%C3%B5es-cliente-servidor)
+    - [Listar banco de dados](#Listar-banco-de-dados)
+    - [Enviar e receber arquivos](#Enviar-e-receber-arquivos)
+    - [Terminar comunicação](#Terminar-comunica%C3%A7%C3%A3o)
+
 Os 4 módulos criados para esse projeto foram:
 
 - dns.py
@@ -197,27 +222,137 @@ A confiabilidade do UDP foi implementada na operação em que o servidor envia u
 
 Antes de entrar em código, é interessante explicar a lógica utilizada para garantir essa confiabilidade.
 
-Basicamente, quem envia um _packet_ usa o último byte da sequência para guardar um número chamado `rand_n` - um número aleatório que vai de acordo com a capacidade dos bytes reservados. Como apenas um byte foi reservado, este número vai de 0 a 255.
+Basicamente, quem envia um _packet_ usa o último byte da sequência para guardar um número chamado `h` - um número baseado num **hash** que tem como entrada a sequência de bytes do pacote, ou seja, se a seência for diferente, muito provavelmente o hash também vai dar. Como apenas um byte foi reservado, este número vai de 0 a 255.
 
-Depois que o servidor envia o _packet_ com para o cliente, ele espera uma mensagem de retorno com o conteúdo do `rand_n`
+Entende-se que se o cliente recebeu o packet de forma confiável, o último byte é igual ao último byte do packet que saiu do servidor, análogo ao número de segmento.
+
+1. O server manda uma packet com dados + `h`.
+2. Se o cliente recebeu o packet, ele retorna uma mensagem com `h`
+3. Se o server recebe o `h` do cliente, ele compara com o `h` local.
+   1. Se os números forem iguais, o server retorna **1** para o cliente.
+   2. Senâo, o server retorna **0**.
+
+Todos os passos reportados acima são executados dentro um intervalo de tempo chamado `timeout`. Caso algum passo não se encaixe nessa janela, tudo é repetido, evitando que aconteça uma espera eterna.
 
 ### send_message
 
-A função `send_file` recebe 3 parâmetros:
+A função `send_message` recebe 3 parâmetros:
+
+1. `msg`: os bytes da mensagem.
+2. `addr`: o endereço de destino.
+3. `sock`: o socket usado.
+
+Primeiramente, é concateado o array de bytes `msg` com o hash `h` desse vetor.
+
+```python
+msg, h = append_hash(msg)  # length of msg + h 1024 bytes
+```
+
+Envia-se via UDP a mensagem com o hash, depois, espera-se por uma resposta `ack` do cliente.
+
+```python
+ack, addr = sock.recvfrom(1023)  # wait for client ack
+
+if ack == h:  # correct ack
+    sock.sendto("1".encode(), addr)  # tell the client it's ok
+    return 1
+else:  # wrong ack
+    sock.sendto("0".encode(), addr)  # tell the client that hash doesn't match
+```
+
+Se o `ack`, que é o hash do cliente, for igual ao `h`, o hash local, o servidor envia **1**, senão, **0**.
+
+### receive_message
+
+Para toda send_message, existe uma receive_message. Esta função age como complemento.
+
+Primeiro, compara-se o `h` da mensagem com o o `h` local. Sendo ambos iguais, envia-se esse `h` como resposta e espera-se por um `ack` do remetente, que se for **1**, ocorreu tudo ok. Senão, o _loop_ roda novamente.
+
+```python
+while True:
+    data, addr = sock.recvfrom(1024)  # receive data
+
+    received_hash = str(data[-1])  # get ack
+
+    if received_hash == get_hash(data):  # correct hash
+        sock.sendto(received_hash.encode(), addr)  # send ack
+
+        server_ack, addr = sock.recvfrom(1024)  # wait for server ack
+
+        if server_ack == "1":
+            return data, addr  # return data
+    else:
+        time.sleep(TIMEOUT)
+```
+
+Como percebe-se acima, caso o hash recebido com o calculado forem diferentes, espera-se o TIMEOUT, que é o tempo necessário para o server mandar novamente os dados.
+
+## Operações cliente-servidor
+
+### Listar banco de dados
+
+Quando o servidor recebe **1** do cliente, ele retorna uma lista com todos os arquivos contidos dentro do diretório `server_data`, e envia para o cliente usando a função já descrita `send_message` que implementa confiabilidade UDP.
+
+```python
+if op == "1":
+    msg = str(os.listdir("./server_data"))
+    send_message(msg, addr, s)
+```
+
+O cliente recebe essa mensagem e a dispôe no console:
+
+```python
+if op == "1":
+    data, addr = receive_message
+```
+
+### Enviar e receber arquivos
+
+Estão implementadas em `receive_file`, para o cliente, e `send_file`, para o servidor.
+
+No lado do cliente, a requisição é feita usando o código **2**, e em seguida, o nome do arquivo. Quando servidor recebe esse código, prepara-se para receber o nome do arquivo em sequência.
+
+As funções `send_file` recebe 3 parâmetros:
 
 1. `filename`: o nome do arquivo
 2. `addr`: o endereço destino
 3. `sock`: o socket usado
 
-No início, a função abre o arquivo no seu banco de dados, que está contido no diretório `server_data`.
+No início, a função abre o arquivo no seu banco de dados, que está contido no diretório `server_data`. Depois, vai lendo pedaços de **1023 bytes** (o motivo é explicado na seção de confiabilidade UDP) até que não haja mais o que ler.
 
 ```python
 with open("server_data/" + filename, "rb") as f:
     while True:
-        data = f.read(BUF - 1)
+        data = f.read(1023)
 
         if not data:
             break
+
+        send_message(data, addr, sock)
 ```
 
-Depois, entra num loop que perdura até que o arquivo todo seja enviado. A leitura dele é feita em pedaços de **1023 bytes**, que é o tamanho do buffer definido para enviar arquivos, mas subtraído de um byte. O motivo desse byte a menos vai ser explicado um pouco mais para frente.
+No lado do cliente, ele recebe os arquivos em sequência até que um tempo `timeout` ocorra sem receber arquivos. Usou-se a biblioteca `select` para implementar o desbloqueio da função `socket.recvfrom()`, impedindo que o cliente esperasse para sempre por um aquivo.
+
+```python
+def receive_file(filename, sock):
+    with open("client_data/" + filename, 'wb') as f:
+        begin = time.process_time()
+
+        while True:
+            ready = select.select([sock], [], [], timeout)
+            if ready[0]:
+                data, addr = receive_message(sock)
+                f.write(data)
+            else:
+                f.close()
+                break
+```
+
+### Terminar comunicação
+
+Quando o cliente escolhe a operação **0**, ele envia esse valor para o servidor. Ambos usam o comando `break` para sair do loop que encapsula o socket.
+
+```python
+if op == "0":
+    break
+```

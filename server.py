@@ -40,7 +40,6 @@ def new_udp_with_client():
 
             if op == "1":
                 msg = str(os.listdir("./server_data"))
-                # s.sendto(msg.encode(), addr)
                 send_message(msg, addr, s, print_status=False)
                 print_sent(msg, addr)
 
@@ -90,14 +89,20 @@ def get_list_files():
 
 
 def send_file(filename, addr, sock):
-    with open("server_data/" + filename, "rb") as f:
-        while True:
-            data = f.read(1023)
+    try:
+        with open("server_data/" + filename, "rb") as f:
+            send_message("1", addr, sock)
+            time.sleep(2)
+            while True:
+                data = f.read(1023)
 
-            if not data:
-                break
+                if not data:
+                    break
 
-            send_message(data, addr, sock)
+                send_message(data, addr, sock)
+    except FileNotFoundError:
+        print("file not found!")
+        send_message("-1", addr, sock)
 
 
 def log(msg):
