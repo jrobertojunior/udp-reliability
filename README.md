@@ -48,12 +48,12 @@ The *ack* guarantees that the user has received the file without being corrupted
 
 If you want to contribute with this project, you can start by implementing the *timeout interruption*.
 
-## Author
-
-**J. Roberto Fonseca Jr.**, undergraduate in computer engineering at CIn-UFPE.
-
 ## Other
 
 This project accompanies a report [Relatorio.md](Relatorio.md) that is written in Portuguese. It describes most of the functions used.
+
+## Author
+
+**J. Roberto Fonseca Jr.**, undergraduate in computer engineering at CIn-UFPE.
 
 ***Contact**: jrfsj@cin.ufpe.br*
