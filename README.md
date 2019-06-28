@@ -1,15 +1,14 @@
 # Projeto DNS Infraestrutura de Comnumicação
 
-```
-Este projeto teve como objetivo implmentar uma comunicação cliente-servidor via UDP garantindo confiabilidade. Um servidor-DNS simplificado é responsável por fornecer o endereço do servidor ao cliente, uma vez que ele já tenha previamente recebido o endereço do servidor.
+> Este é um projeto da cadeira Infraestrutura de Comunicação, 2019.1, CIn-UFPE. Teve como objetivo implmentar uma comunicação cliente-servidor via UDP garantindo confiabilidade. Um servidor-DNS simplificado é responsável por fornecer o endereço do servidor ao cliente.
 
 Autor: José Roberto Fonseca e Silva Júnior, jrfsj@cin.ufpe.br
-```
 
 ## Sumário
 
 - [Projeto DNS Infraestrutura de Comnumicação](#Projeto-DNS-Infraestrutura-de-Comnumica%C3%A7%C3%A3o)
   - [Sumário](#Sum%C3%A1rio)
+  - [Teste simples](#Teste-simples)
   - [Módulo DNS](#M%C3%B3dulo-DNS)
     - [Mapeamento de endereços](#Mapeamento-de-endere%C3%A7os)
     - [Inicialização](#Inicializa%C3%A7%C3%A3o)
@@ -31,12 +30,14 @@ Autor: José Roberto Fonseca e Silva Júnior, jrfsj@cin.ufpe.br
     - [Enviar e receber arquivos](#Enviar-e-receber-arquivos)
     - [Terminar comunicação](#Terminar-comunica%C3%A7%C3%A3o)
 
+Este projeto foi feito usando **Python 3.7**.
+
 Os 4 módulos criados para esse projeto foram:
 
-- dns.py
-- server.py
-- client.py
-- udp_reliability
+- [dns.py](dns.py)
+- [server.py](server.py)
+- [client.py](client.py)
+- [udp_reliability.py](udp_reliability.py)
 
 Seguindo ordem cronológica, a execução e operação desse projeto se dá nos seguintes passos:
 
@@ -46,14 +47,42 @@ Seguindo ordem cronológica, a execução e operação desse projeto se dá nos 
 4. O cliente com o endereço em mãos, conecta-se com servidor via TCP.
 5. Após ter realizado conexão TCP, esta conexão é fechada para, a partir de agora, só se comunicar via UDP com o servidor. Um leque de operações cliente-servidor é apresentado via console ao cliente. As operações são realizadas até que a comunicação seja terminada.
 
-Segundo essa ordem de execução deles é preferível que seja primeiro o `dns`, segundo o `server`, terceiro o `client`.
+É preferível que sejam executados primeiro o `dns`, segundo o `server`, terceiro o `client`.
 
 As seções deste relatório foram divididas em 4:
 
-- Módulo DNS: descreve a implementação do módulo DNS, seja sua comunicação com o cliente ou servidor, assim como o mapeamento dos endereços.
-- Módulo servidor: descreve os passos realizados pelo servidos até se comunicar com o cliente.
-- Módulo cliente: descreve as operações realizadas pelo cliente e a interface voltada usuário para comunicação cliente-servidor.
-- Confiabilidade com UDP: apresenta a abordagem tomada para garantir confiabilidade do transporte de mensagens via UDP.
+- [Projeto DNS Infraestrutura de Comnumicação](#Projeto-DNS-Infraestrutura-de-Comnumica%C3%A7%C3%A3o)
+  - [Sumário](#Sum%C3%A1rio)
+  - [Teste simples](#Teste-simples)
+  - [Módulo DNS](#M%C3%B3dulo-DNS)
+    - [Mapeamento de endereços](#Mapeamento-de-endere%C3%A7os)
+    - [Inicialização](#Inicializa%C3%A7%C3%A3o)
+    - [Loop](#Loop)
+      - [Formato geral de uma mensagem](#Formato-geral-de-uma-mensagem)
+      - [Mensagem do servidor](#Mensagem-do-servidor)
+      - [Mensagem do cliente](#Mensagem-do-cliente)
+  - [Módulo servidor](#M%C3%B3dulo-servidor)
+    - [Comunicação com servidor DNS](#Comunica%C3%A7%C3%A3o-com-servidor-DNS)
+    - [Comunicação com cliente](#Comunica%C3%A7%C3%A3o-com-cliente)
+  - [Módulo cliente](#M%C3%B3dulo-cliente)
+    - [Inicialização e comunicação com DNS-server](#Inicializa%C3%A7%C3%A3o-e-comunica%C3%A7%C3%A3o-com-DNS-server)
+    - [Comunicação com servidor](#Comunica%C3%A7%C3%A3o-com-servidor)
+  - [Confiabilidade com UDP](#Confiabilidade-com-UDP)
+    - [send_message](#sendmessage)
+    - [receive_message](#receivemessage)
+  - [Operações cliente-servidor](#Opera%C3%A7%C3%B5es-cliente-servidor)
+    - [Listar banco de dados](#Listar-banco-de-dados)
+    - [Enviar e receber arquivos](#Enviar-e-receber-arquivos)
+    - [Terminar comunicação](#Terminar-comunica%C3%A7%C3%A3o)
+
+## Teste simples
+
+Para realizar um teste simples, execute os comandos em consoles independentes:
+
+1. \$ `python dns.py`.
+2. \$ `python server.py`.
+3. \$ `python client.py`.
+
 
 ## Módulo DNS
 
@@ -214,7 +243,7 @@ Dentro do loop, a função `get_user_input` dispôe para o usuário 3 opções d
 
 1. End communication. Esta ação interrompe o andamento tando do loop após mandar uma mensagem para o servidor com o conteúdo _"**0**"_, indicando para ele também interromper seu loop.
 2. List files. Envia uma mensagem _"**1**"_ ao servidor requisitando uma lista dos arquivos no banco de dados.
-3. Request file. Primeiro, envia uma mensagem ao servidor com o número da operação (_"**2**"_), que, por sua vez, espera por outra mensagem. Essa segunda mensagem que vem do cliente contém o _filename_. Então, o cliente executa a função `receive_file`, que recebe um arquivo usando funções que abstraem para o cliente a implementação da confiabilidade do UDP. \*As funções de confiabilidade estão descritas na seção **_Garantindo confiabilidade_\***
+3. Request file. Primeiro, envia uma mensagem ao servidor com o número da operação (_"**2**"_), que, por sua vez, espera por outra mensagem. Essa segunda mensagem que vem do cliente contém o _filename_. Então, o cliente executa a função `receive_file`, que recebe um arquivo usando funções que abstraem para o cliente a implementação da confiabilidade do UDP. _As funções de confiabilidade estão descritas na seção seguinte_
 
 ## Confiabilidade com UDP
 
@@ -347,6 +376,8 @@ def receive_file(filename, sock):
                 f.close()
                 break
 ```
+
+Foi implementada uma checagem por existência do arquivo no lado do servidor com um simples `try except`, mas que não foi mostrada aqui para não extender o tamanho do relatório.
 
 ### Terminar comunicação
 
