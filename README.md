@@ -2,11 +2,11 @@
 
 ## What is
 
-> This project was made to Communication Infrastructure course, Center of Informatics - Federal University of Pernambuco.
+> This project was made tot the Communication Infrastructure course, at Center of Informatics - Federal University of Pernambuco.
 
 The main purpose of this project is to establish a client-server communication using UDP (User Datagram Protocol) while guaranteeing **reliability**. To test this reliability, a file transfer operation was implemented.
 
-Another feature is the implementation of a simple DNS server. Initially, the client doesn't know the server address. Only after requesting the DNS-server, the client reaches the server to start communication.
+Another feature is the implementation of a simple **DNS server**. Initially, the client doesn't know the server address. Only after requesting the DNS-server, the client can reach the server to start communication.
 
 This project is fully implemented in **Python 3.7** and `socket` library. The files were separated into four modules:
 
