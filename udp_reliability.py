@@ -63,6 +63,21 @@ def receive_message(sock, print_status=False):
 
 
 def append_rand_n(data):
-    rand_n = randint(0, 10)  # generating random number
+    # rand_n = randint(0, 10)  # generating random number
+    h = get_hash(data)
 
-    return data + bytes([rand_n]), rand_n
+    # return data + bytes([rand_n]), rand_n
+    return data + bytes([h]), h
+
+
+def get_hash(data):
+    s = str(hash(data))
+
+    if s[0] == '-':
+        s = s[1:]
+
+    total = 0
+    for c in s:
+        total += int(c)
+
+    return total

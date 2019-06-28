@@ -5,7 +5,7 @@ from support import *
 import select
 import time
 import random
-from udp_confiability import *
+from udp_reliability import *
 import sys
 
 

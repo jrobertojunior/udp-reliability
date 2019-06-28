@@ -6,11 +6,12 @@ Este projeto teve como objetivo implmentar uma comunicação cliente-servidor vi
 Autor: José Roberto Fonseca e Silva Júnior, jrfsj@cin.ufpe.br
 ```
 
-Os 3 módulos criados para esse projeto foram:
+Os 4 módulos criados para esse projeto foram:
 
 - dns.py
 - server.py
 - client.py
+- udp_reliability
 
 Seguindo ordem cronológica, a execução e operação desse projeto se dá nos seguintes passos:
 
@@ -140,7 +141,7 @@ def udp_with_client():
                 break
 ```
 
-Dentro do loop, o server age de acordo com a operação que o cliente deseja fazer. No total são 3 operações, e suas descrições estão seção _Módulo cliente_ e _Garantindo confiabilidade_
+Dentro do loop, o server age de acordo com a operação que o cliente deseja fazer. No total são 3 operações, e suas descrições estão seção _Módulo cliente_ e _Garantindo confiabilidade_.
 
 ## Módulo cliente
 
@@ -188,19 +189,19 @@ Dentro do loop, a função `get_user_input` dispôe para o usuário 3 opções d
 
 1. End communication. Esta ação interrompe o andamento tando do loop após mandar uma mensagem para o servidor com o conteúdo _"**0**"_, indicando para ele também interromper seu loop.
 2. List files. Envia uma mensagem _"**1**"_ ao servidor requisitando uma lista dos arquivos no banco de dados.
-3. Request file. Primeiro, envia uma mensagem ao servidor com o número da operação (_"**2**"_), que, por sua vez, espera por outra mensagem. Essa segunda mensagem que vem do cliente contém o _filename_. Então, o cliente executa a função `receive_file`, que está melhor descrita na seção _Garantindo confiabilidade_
+3. Request file. Primeiro, envia uma mensagem ao servidor com o número da operação (_"**2**"_), que, por sua vez, espera por outra mensagem. Essa segunda mensagem que vem do cliente contém o _filename_. Então, o cliente executa a função `receive_file`, que recebe um arquivo usando funções que abstraem para o cliente a implementação da confiabilidade do UDP. \*As funções de confiabilidade estão descritas na seção **_Garantindo confiabilidade_\***
 
 ## Confiabilidade com UDP
 
-A confiabilidade do UDP foi implementada na operação em que o servidor envia um arquivo para o cliente. São duas funções que tratam de todo o processo: `send_file` e `receive_file`.
+A confiabilidade do UDP foi implementada na operação em que o servidor envia um arquivo para o cliente. São duas funções que tratam de todo o processo: `send_message` e `receive message`.
 
 Antes de entrar em código, é interessante explicar a lógica utilizada para garantir essa confiabilidade.
 
 Basicamente, quem envia um _packet_ usa o último byte da sequência para guardar um número chamado `rand_n` - um número aleatório que vai de acordo com a capacidade dos bytes reservados. Como apenas um byte foi reservado, este número vai de 0 a 255.
 
-Quando o servidor envia um datagrama para o cliente, ele espera uma confimação vinda do cliente de que o pacote foi recebido por completo, análogo ao _ack_ do protocolo TCP. O conteúdo dessa resposta é exatamente o `rand_n` que foi atribuído pelo servidor.
+Depois que o servidor envia o _packet_ com para o cliente, ele espera uma mensagem de retorno com o conteúdo do `rand_n`
 
-### send_file
+### send_message
 
 A função `send_file` recebe 3 parâmetros:
 

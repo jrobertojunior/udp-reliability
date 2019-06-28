@@ -6,7 +6,7 @@ import os
 from support import *
 from random import randint
 import select
-from udp_confiability import *
+from udp_reliability import *
 import threading
 
 DOMAIN = "www.foo123.org"
